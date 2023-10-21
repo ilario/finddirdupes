@@ -17,9 +17,9 @@ Specify the minimum size of folders to consider, in bytes:
 ./finddirdupes.sh dir_name min_size
 ```
 
-Example: analyze the folders contained in the home folder and ignore the empty ones.
+Example: analyze the folders contained in the home folder and ignore the empty ones (recommended).
 ```
-./finddirdupes.sh ~ 5000"
+./finddirdupes.sh ~ 10000
 ```
 
 ## Other alternatives
