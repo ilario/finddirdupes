@@ -132,14 +132,14 @@ parents=$(grep -v -f <(cat <<< $folders_slash) <<< $folders)
 ####### analyze in deep the selected folders ##########
 
 hash_dir_dups=""
-for parent in $parents; do
+while read parent; do
 	# use the hash_dir function for calculating the hash of the folders
 	# ignore the internal bad content marks
-	hash_dir_dups+=$(hash_dir $parent/ 3>&1 | grep -v "////BAD CONTENT////")
+	hash_dir_dups+=$(hash_dir "$parent/" 3>&1 | grep -v "////BAD CONTENT////")
 	# add a newline between folder and folder
 	hash_dir_dups+="
 "
-done
+done <<< $parents
 
 # keep only the entries with a duplicate hash
 hash_dups=$(sort <<< $hash_dir_dups| uniq -D -w 32 )
