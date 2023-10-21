@@ -138,34 +138,76 @@ for parent in $parents; do
 	hash_dir_dups+=$(hash_dir $parent/ 3>&1 | grep -v "////BAD CONTENT////")
 	# add a newline between folder and folder
 	hash_dir_dups+="
-	"
+"
 done
 
 # keep only the entries with a duplicate hash
 hash_dups=$(sort <<< $hash_dir_dups| uniq -D -w 32 )
 
+# in presence of empty dirs, the dir field can be empty, I am not sure why...
+# so I remove those lines
+hash_dups=$(grep "/" <<< $hash_dups)
+
+#######################################################
+############ eliminate subfolders again ###############
+
+# exclude from the folders list all the folders which have a parent folder also in the list
+# for example, if the folders list was:
+#  uno/due
+#  uno
+#  tre
+# then the parents list will be:
+#  uno
+#  tre
+
+# list folders, removing the hash but keeping the trailing slash
+dups_slash=$(cut -d"/" -f 2- <<< $hash_dups)
+
+# remove the trailing slash from the full output
+hash_dups_noslash=$(sed 's/\/$//' <<< $hash_dups)
+
+# remove from the list all the folders which contain the name of another folder plus a slash
+# which are the subfolders of another folder in the list
+hash_dups_nosub=$(grep -v -f <(cat <<< $dups_slash) <<< $hash_dups_noslash)
+
+# but this time we need to keep the childs in some cases,
+# for example if we have these two groups of duplicates:
+# uno/due/
+# tre/quattro/
+# cinque/
+#
+# uno/
+# tre/
+#
+# then removing uno/due/ and tre/quattro/ would leave cinque as if it was not a duplicate
+# so we take the hash of the parents folders and we look for them in the original list
+
+# here we take the hashes
+hashes_of_hash_dups_nosub=$(cut -d" " -f -4 <<< $hash_dups_nosub)
+
+# and we use the hashes for filtering the original list
+hash_dups_allparents=$(grep -f <(cat <<< $hashes_of_hash_dups_nosub) <<< $hash_dups)
+
 #######################################################
 ############## print in a nice format #################
 
-if [[ $hash_dups ]]; then
+if [[ $hash_dups_allparents ]]; then
 	# take only the last two fields of the strings and add 
 	# info about the size of the folders
 	hash_size_dups=$(while read t t t hash ddir; do
-		# in presence of empty dirs, the ddir can be empty, I am not sure why...
-		if [ -n "$ddir" ]; then 
-			# check if the second argument is a number, if so,
-			# use it as minimum folder size
-			# https://stackoverflow.com/a/808740/5033401
-			if [ -n "$2" ] && [ "$2" -eq "$2" ] 2>/dev/null; then
-				size_dir=$(du -s -t $2 "$ddir")
-				# if the folder is smaller than $2, do not print anything
-				if [ -n "$size_dir" ]; then
-					echo $hash $size_dir
-				fi
-			else
-				echo $hash $(du -s "$ddir")
+		# check if the second argument is a number, if so,
+		# use it as minimum folder size
+		# https://stackoverflow.com/a/808740/5033401
+		if [ -n "$2" ] && [ "$2" -eq "$2" ] 2>/dev/null; then
+			size_dir=$(du -s -t $2 "$ddir")
+			# if the folder is smaller than $2, do not print anything
+			if [ -n "$size_dir" ]; then
+				echo $hash $size_dir
 			fi
-		fi; done <<< $hash_dups)
+		else
+			echo $hash $(du -s "$ddir")
+		fi
+	done <<< $hash_dups_allparents)
 	
 	# sort by the size
 	hash_size_dups_sorted=$(sort -k2,2n -k1,1 <<< $hash_size_dups)
