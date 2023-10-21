@@ -1,3 +1,5 @@
+# Currently broken, will fix soon
+
 # finddirdupes
 Finds duplicate folders
 
