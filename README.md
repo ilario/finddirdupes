@@ -1,0 +1,2 @@
+# finddirdupes
+Finds duplicate folders
