@@ -1,4 +1,4 @@
-#! /bin/sh -
+#!/usr/bin/env bash
 
 # check if first argument exists
 if ! dir=$(ls -pd "$1"); then
@@ -36,7 +36,7 @@ hash_dir () {
 		else
 			# launch this same function, in a recursive fashion, 
 			# over all the found subdirectories and files
-			dirhashes=$(ls -1Ap "$1" | while read p; do hash_dir "$1$p"; done)
+			dirhashes=$(ls -1Ap "$1" | while read -r p; do hash_dir "$1$p"; done)
 			# if any of the subdirectories had something marked as
 			# "bad content", then mark also this parent folder as bad content
 			if [[ $dirhashes =~ "////BAD CONTENT////" ]]; then
@@ -132,7 +132,7 @@ parents=$(grep -v -f <(cat <<< "$folders_slash") <<< "$folders")
 ####### analyze in deep the selected folders ##########
 
 hash_dir_dups=""
-while read parent; do
+while read -r parent; do
 	# use the hash_dir function for calculating the hash of the folders
 	# ignore the internal bad content marks
 	hash_dir_dups+=$(hash_dir "$parent/" 3>&1 | grep -v "////BAD CONTENT////")
@@ -194,7 +194,7 @@ hash_dups_allparents=$(grep -f <(cat <<< "$hashes_of_hash_dups_nosub") <<< "$has
 if [[ $hash_dups_allparents ]]; then
 	# take only the last two fields of the strings and add 
 	# info about the size of the folders
-	hash_size_dups=$(while read t t t hash ddir; do
+	hash_size_dups=$(while read -r _ _ _ hash ddir; do
 		# check if the second argument is a number, if so,
 		# use it as minimum folder size
 		# https://stackoverflow.com/a/808740/5033401
