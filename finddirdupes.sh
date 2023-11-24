@@ -126,7 +126,8 @@ folders_slash=$(sed 's/$/\//' <<< "$folders" )
 
 # remove from the list all the folders which contain the name of another folder plus a slash
 # which are the subfolders of another folder in the list
-parents=$(grep -v -f <(cat <<< "$folders_slash") <<< "$folders")
+# the -F options is for avoiding the "grep: warning: stray \ before /" message in presence of dirs named "\"
+parents=$(grep -v -F -f <(cat <<< "$folders_slash") <<< "$folders")
 
 #######################################################
 ####### analyze in deep the selected folders ##########
@@ -168,7 +169,8 @@ hash_dups_noslash=$(sed 's/\/$//' <<< "$hash_dups")
 
 # remove from the list all the folders which contain the name of another folder plus a slash
 # which are the subfolders of another folder in the list
-hash_dups_nosub=$(grep -v -f <(cat <<< "$dups_slash") <<< "$hash_dups_noslash")
+# the -F options is for avoiding the "grep: warning: stray \ before /" message in presence of dirs named "\"
+hash_dups_nosub=$(grep -v -F -f <(cat <<< "$dups_slash") <<< "$hash_dups_noslash")
 
 # but this time we need to keep the childs in some cases,
 # for example if we have these two groups of duplicates:
